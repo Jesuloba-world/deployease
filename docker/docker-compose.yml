@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: deployease_postgres
+    environment:
+      POSTGRES_DB: deployease_dev
+      POSTGRES_USER: deployease
+      POSTGRES_PASSWORD: deployease_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - deployease_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deployease -d deployease_dev"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Dragonfly Cache
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.23.1
+    container_name: deployease_dragonfly
+    ports:
+      - "6379:6379"
+    volumes:
+      - dragonfly_data:/data
+    networks:
+      - deployease_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend Service
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: deployease_backend
+    environment:
+      - DATABASE_URL=postgres://deployease:deployease_password@postgres:5432/deployease_dev?sslmode=disable
+      - DRAGONFLY_URL=redis://dragonfly:6379
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+      - SERVER_ENV=development
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../backend:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - deployease_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dragonfly:
+        condition: service_healthy
+    restart: unless-stopped
+    develop:
+      watch:
+        - action: rebuild
+          path: ../backend
+          ignore:
+            - ../backend/bin/
+            - ../backend/tmp/
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    container_name: deployease_frontend
+    environment:
+      - VITE_API_URL=http://localhost:8080
+      - VITE_WS_URL=ws://localhost:8080/ws
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    networks:
+      - deployease_network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ../frontend/src
+          target: /app/src
+        - action: rebuild
+          path: ../frontend/package.json
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: deployease_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    networks:
+      - deployease_network
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  dragonfly_data:
+    driver: local
+
+networks:
+  deployease_network:
+    driver: bridge

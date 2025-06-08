@@ -1,0 +1,100 @@
+version: "3"
+
+vars:
+    NODE_ENV: development
+
+tasks:
+    default:
+        cmds:
+            - task: help
+
+    help:
+        desc: Display available tasks
+        silent: true
+        cmds:
+            - echo "DeployEase Frontend"
+            - echo "Available tasks:"
+            - task -l
+
+    # Development tasks
+    dev:
+        desc: Start development server
+        cmds:
+            - bun run dev
+
+    # Build tasks
+    build:
+        desc: Build for production
+        cmds:
+            - bun run build
+
+    preview:
+        desc: Preview production build
+        cmds:
+            - bun run preview
+
+    # Test tasks
+    test:
+        desc: Run tests
+        cmds:
+            - bun test
+
+    test:watch:
+        desc: Run tests in watch mode
+        cmds:
+            - bun run test:watch
+
+    test:coverage:
+        desc: Run tests with coverage
+        cmds:
+            - bun run test:coverage
+
+    # Lint tasks
+    lint:
+        desc: Run ESLint
+        cmds:
+            - bun run lint
+
+    lint:fix:
+        desc: Fix ESLint issues
+        cmds:
+            - bun run lint:fix
+
+    # Type checking
+    type-check:
+        desc: Run TypeScript type checking
+        cmds:
+            - bun run type-check
+
+    # Storybook tasks
+    storybook:
+        desc: Start Storybook development server
+        cmds:
+            - bun run storybook
+
+    storybook:build:
+        desc: Build Storybook for production
+        cmds:
+            - bun run build-storybook
+
+    # Dependency tasks
+    install:
+        desc: Install dependencies
+        cmds:
+            - bun install
+
+    update:
+        desc: Update dependencies
+        cmds:
+            - bun update
+
+    # Clean tasks
+    clean:
+        desc: Clean build artifacts and node_modules
+        cmds:
+            - rm -rf dist build node_modules
+
+    clean:cache:
+        desc: Clean bun cache
+        cmds:
+            - bun pm cache rm

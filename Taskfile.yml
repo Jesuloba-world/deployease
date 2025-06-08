@@ -1,0 +1,162 @@
+version: "3"
+
+vars:
+    BACKEND_DIR: backend
+    FRONTEND_DIR: frontend
+    DOCKER_DIR: docker
+
+tasks:
+    default:
+        cmds:
+            - task: help
+
+    help:
+        desc: Display available tasks
+        silent: true
+        cmds:
+            - echo "DeployEase - Self-hosting platform"
+            - echo "Available tasks:"
+            - task -l
+
+    # dev environment
+    dev:
+        desc: start dev environment
+        cmds:
+            - task: dev:backend
+              vars: { DETACH: true }
+            - task: dev:frontend
+
+    dev:backend:
+        desc: Start backend development server
+        dir: "{{.BACKEND_DIR}}"
+        cmds:
+            - go run cmd/server/main.go
+
+    dev:frontend:
+        desc: Start frontend development server
+        dir: "{{.FRONTEND_DIR}}"
+        cmds:
+            - bun run dev
+
+    # Build tasks
+    build:
+        desc: Build all components
+        cmds:
+            - task: build:backend
+            - task: build:frontend
+
+    build:backend:
+        desc: Build backend
+        dir: "{{.BACKEND_DIR}}"
+        cmds:
+            - go build -o bin/server cmd/server/main.go
+
+    build:frontend:
+        desc: Build frontend
+        dir: "{{.FRONTEND_DIR}}"
+        cmds:
+            - bun run build
+
+    # Test tasks
+    test:
+        desc: Run all tests
+        cmds:
+            - task: test:backend
+            - task: test:frontend
+
+    test:backend:
+        desc: Run backend tests
+        dir: "{{.BACKEND_DIR}}"
+        cmds:
+            - go test ./...
+
+    test:frontend:
+        desc: Run frontend tests
+        dir: "{{.FRONTEND_DIR}}"
+        cmds:
+            - bun test
+
+        # Database tasks
+    db:migrate:
+        desc: Run database migrations
+        dir: "{{.BACKEND_DIR}}"
+        cmds:
+            - go run cmd/server/main.go migrate
+
+    db:seed:
+        desc: Seed database with initial data
+        dir: "{{.BACKEND_DIR}}"
+        cmds:
+            - go run cmd/server/main.go seed
+
+    db:reset:
+        desc: Reset database (drop and recreate)
+        dir: "{{.BACKEND_DIR}}"
+        cmds:
+            - go run cmd/server/main.go db:reset
+
+    # Docker tasks
+    docker:build:
+        desc: Build Docker images
+        dir: "{{.DOCKER_DIR}}"
+        cmds:
+            - docker-compose build
+
+    docker:up:
+        desc: Start Docker containers
+        dir: "{{.DOCKER_DIR}}"
+        cmds:
+            - docker-compose up -d
+
+    docker:down:
+        desc: Stop Docker containers
+        dir: "{{.DOCKER_DIR}}"
+        cmds:
+            - docker-compose down
+
+    # Lint tasks
+    lint:
+        desc: Run all linters
+        cmds:
+            - task: lint:backend
+            - task: lint:frontend
+
+    lint:backend:
+        desc: Lint backend code
+        dir: "{{.BACKEND_DIR}}"
+        cmds:
+            - go vet ./...
+            - golangci-lint run
+
+    lint:frontend:
+        desc: Lint frontend code
+        dir: "{{.FRONTEND_DIR}}"
+        cmds:
+            - npm run lint
+
+    # Install tasks
+    install:
+        desc: Install all dependencies
+        cmds:
+            - task: install:backend
+            - task: install:frontend
+
+    install:backend:
+        desc: Install backend dependencies
+        dir: "{{.BACKEND_DIR}}"
+        cmds:
+            - go mod download
+
+    install:frontend:
+        desc: Install frontend dependencies
+        dir: "{{.FRONTEND_DIR}}"
+        cmds:
+            - npm install
+
+    # Deployment tasks
+    deploy:
+        desc: Deploy application
+        cmds:
+            - task: build
+            - task: docker:build
+            - task: docker:up

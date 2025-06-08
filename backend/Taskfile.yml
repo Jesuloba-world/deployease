@@ -1,0 +1,95 @@
+version: "3"
+
+vars:
+    MAIN_FILE: cmd/server/main.go
+    BIN_DIR: bin
+    BIN_NAME: server
+
+tasks:
+    default:
+        cmds:
+            - task: help
+
+    help:
+        desc: Display available tasks
+        silent: true
+        cmds:
+            - echo "DeployEase Backend"
+            - echo "Available tasks:"
+            - task -l
+
+    # Development tasks
+    dev:
+        desc: Start development server
+        cmds:
+            - go run {{.MAIN_FILE}}
+
+    # Build tasks
+    build:
+        desc: Build backend binary
+        cmds:
+            - mkdir -p {{.BIN_DIR}}
+            - go build -o {{.BIN_DIR}}/{{.BIN_NAME}} {{.MAIN_FILE}}
+
+    # Test tasks
+    test:
+        desc: Run all tests
+        cmds:
+            - go test ./...
+
+    test:coverage:
+        desc: Run tests with coverage
+        cmds:
+            - go test -coverprofile=coverage.out ./...
+            - go tool cover -html=coverage.out
+
+    # Database tasks
+    db:migrate:
+        desc: Run database migrations
+        cmds:
+            - go run {{.MAIN_FILE}} migrate
+
+    db:migrate:create:
+        desc: Create a new migration file
+        cmds:
+            - go run {{.MAIN_FILE}} migrate:create {{.CLI_ARGS}}
+
+    db:seed:
+        desc: Seed database with initial data
+        cmds:
+            - go run {{.MAIN_FILE}} seed
+
+    # Code generation tasks
+    generate:
+        desc: Run code generation
+        cmds:
+            - go generate ./...
+
+    sqlc:generate:
+        desc: Generate SQL code using sqlc
+        cmds:
+            - sqlc generate
+
+    # Lint tasks
+    lint:
+        desc: Run linters
+        cmds:
+            - go vet ./...
+            - golangci-lint run
+
+    # Dependency tasks
+    deps:
+        desc: Download dependencies
+        cmds:
+            - go mod download
+
+    deps:tidy:
+        desc: Tidy dependencies
+        cmds:
+            - go mod tidy
+
+    # Clean tasks
+    clean:
+        desc: Clean build artifacts
+        cmds:
+            - rm -rf {{.BIN_DIR}}
