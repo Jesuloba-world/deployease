@@ -24,6 +24,7 @@ go.work
 # Environment variables
 .env
 .env.local
+backend/config.yaml
 .env.development.local
 .env.test.local
 .env.production.local

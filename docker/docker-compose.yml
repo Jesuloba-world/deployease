@@ -1,16 +1,16 @@
-version: '3.8'
+name: deployease
 
 services:
   # PostgreSQL Database
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: deployease_postgres
     environment:
       POSTGRES_DB: deployease_dev
       POSTGRES_USER: deployease
       POSTGRES_PASSWORD: deployease_password
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d
@@ -25,7 +25,7 @@ services:
 
   # Dragonfly Cache
   dragonfly:
-    image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.23.1
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.24.0
     container_name: deployease_dragonfly
     ports:
       - "6379:6379"

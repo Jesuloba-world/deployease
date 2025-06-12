@@ -4,6 +4,7 @@ vars:
     MAIN_FILE: cmd/server/main.go
     BIN_DIR: bin
     BIN_NAME: server
+    DATABASE_URL: postgres://deployease:deployease_password@localhost:5434/deployease_dev?sslmode=disable
 
 tasks:
     default:
@@ -44,15 +45,25 @@ tasks:
             - go tool cover -html=coverage.out
 
     # Database tasks
-    db:migrate:
-        desc: Run database migrations
+    db:goose:up:
+        desc: Apply all pending goose migrations
         cmds:
-            - go run {{.MAIN_FILE}} migrate
+            - goose -dir migrations postgres "{{.DATABASE_URL}}" up
 
-    db:migrate:create:
-        desc: Create a new migration file
+    db:goose:down:
+        desc: Rollback last goose migration
         cmds:
-            - go run {{.MAIN_FILE}} migrate:create {{.CLI_ARGS}}
+            - goose -dir migrations postgres "{{.DATABASE_URL}}" down
+
+    db:goose:status:
+        desc: Show current goose migration status
+        cmds:
+            - goose -dir migrations postgres "{{.DATABASE_URL}}" status
+
+    db:goose:create:
+        desc: Create a new goose SQL migration file
+        cmds:
+            - goose -dir migrations create {{.NAME}} sql
 
     db:seed:
         desc: Seed database with initial data
