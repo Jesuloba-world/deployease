@@ -71,13 +71,25 @@ tasks:
             - go run {{.MAIN_FILE}} seed
 
     # Code generation tasks
+    sqlc:install:
+        desc: Install sqlc if not already installed
+        cmds:
+            - go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+        status:
+            - command -v sqlc
+
     generate:
         desc: Run code generation
+        deps:
+            - sqlc:install
         cmds:
+            - task: sqlc:generate
             - go generate ./...
 
     sqlc:generate:
         desc: Generate SQL code using sqlc
+        deps:
+            - sqlc:install
         cmds:
             - sqlc generate
 
