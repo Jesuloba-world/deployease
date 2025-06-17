@@ -5,6 +5,7 @@ vars:
     BIN_DIR: bin
     BIN_NAME: server
     DATABASE_URL: postgres://deployease:deployease_password@localhost:5434/deployease_dev?sslmode=disable
+    MIGRATIONS_DIR: sql/migrations
 
 tasks:
     default:
@@ -48,22 +49,22 @@ tasks:
     db:goose:up:
         desc: Apply all pending goose migrations
         cmds:
-            - goose -dir migrations postgres "{{.DATABASE_URL}}" up
+            - goose -dir {{.MIGRATIONS_DIR}} postgres "{{.DATABASE_URL}}" up
 
     db:goose:down:
         desc: Rollback last goose migration
         cmds:
-            - goose -dir migrations postgres "{{.DATABASE_URL}}" down
+            - goose -dir {{.MIGRATIONS_DIR}} postgres "{{.DATABASE_URL}}" down
 
     db:goose:status:
         desc: Show current goose migration status
         cmds:
-            - goose -dir migrations postgres "{{.DATABASE_URL}}" status
+            - goose -dir {{.MIGRATIONS_DIR}} postgres "{{.DATABASE_URL}}" status
 
     db:goose:create:
         desc: Create a new goose SQL migration file
         cmds:
-            - goose -dir migrations create {{.NAME}} sql
+            - goose -dir {{.MIGRATIONS_DIR}} create {{.NAME}} sql
 
     db:seed:
         desc: Seed database with initial data

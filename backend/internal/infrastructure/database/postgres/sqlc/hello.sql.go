@@ -3,7 +3,7 @@
 //   sqlc v1.29.0
 // source: hello.sql
 
-package db
+package sqlc
 
 import (
 	"context"
